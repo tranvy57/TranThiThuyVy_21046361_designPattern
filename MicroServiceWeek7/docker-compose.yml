@@ -1,0 +1,91 @@
+version: "3.8"
+
+services:
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - product-service
+      - order-service
+      - customer-service
+    environment:
+      - PRODUCT_SERVICE_URL=http://product-service:8081
+      - ORDER_SERVICE_URL=http://order-service:8082
+      - CUSTOMER_SERVICE_URL=http://customer-service:8083
+
+  product-service:
+    build: ./product-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://product-db:5432/productdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    depends_on:
+      - product-db
+      - rabbitmq
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://order-db:5432/orderdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    depends_on:
+      - order-db
+      - rabbitmq
+
+  customer-service:
+    build: ./customer-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://customer-db:5432/customerdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    depends_on:
+      - customer-db
+      - rabbitmq
+
+  product-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=productdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - product-db-data:/var/lib/postgresql/data
+
+  order-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=orderdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - order-db-data:/var/lib/postgresql/data
+
+  customer-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=customerdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - customer-db-data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  product-db-data:
+  order-db-data:
+  customer-db-data:
